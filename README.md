@@ -1,5 +1,7 @@
 # Local Full Stack Deep Research
 
+[English](README.md) | [中文](README.zh-CN.md)
+
 A powerful full-stack application for local deep research powered by LangGraph, supporting multiple LLM providers and search APIs. The graph implementation is referenced from [open_deep_research](https://github.com/langchain-ai/open_deep_research).
 
 ![APIs](./images/APIs.png)

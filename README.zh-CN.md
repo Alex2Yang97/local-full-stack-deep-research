@@ -1,5 +1,7 @@
 # 本地全栈深度研究应用
 
+[English](README.md) | [中文](README.zh-CN.md)
+
 一个基于 LangGraph 构建的强大全栈本地深度研究应用，支持多种 LLM 提供商和搜索 API。图实现参考自 [open_deep_research](https://github.com/langchain-ai/open_deep_research)。
 
 ![APIs](./images/APIs.png)
