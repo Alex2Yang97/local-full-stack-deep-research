@@ -7,9 +7,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from open_deep_research.graph import builder
 from langgraph.types import Command
 from dotenv import load_dotenv
-from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 import json
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,6 +28,20 @@ app.add_middleware(
 memory = MemorySaver()
 graph = builder.compile(checkpointer=memory)
 
+
+REPORT_STRUCTURE = """Use this structure to create a report on the user-provided topic:
+
+1. Introduction (no research needed)
+   - Brief overview of the topic area
+
+2. Main Body Sections:
+   - Each section should focus on a sub-topic of the user-provided topic
+   
+3. Conclusion
+   - Aim for 1 structural element (either a list of table) that distills the main body sections 
+   - Provide a concise summary of the report"""
+   
+
 class StartConversationRequest(BaseModel):
     topic: str
     config: Optional[Dict[str, Any]] = None
@@ -38,11 +52,12 @@ class StartConversationRequest(BaseModel):
                 {
                     "topic": "What is the mcp protocol?", 
                     "config": {
-                        "planner_provider": "openai",
-                        "planner_model": "gpt-4o-mini", 
                         "search_api": "tavily",
+                        "planner_model": "gpt-4o-mini", 
                         "writer_model": "gpt-4o-mini",
-                        "writer_provider": "openai",
+                        "summarization_model": "gpt-4o-mini",
+                        "max_search_depth": 2,
+                        "report_structure": REPORT_STRUCTURE,
                     }
                 }
             ]   
@@ -61,11 +76,12 @@ class ContinueConversationRequest(BaseModel):
                     "thread_id": "123",
                     "feedback": True,
                     "config": {
-                        "planner_provider": "openai",
-                        "planner_model": "gpt-4o-mini", 
                         "search_api": "tavily",
+                        "planner_model": "gpt-4o-mini",
                         "writer_model": "gpt-4o-mini",
-                        "writer_provider": "openai",
+                        "summarization_model": "gpt-4o-mini",
+                        "max_search_depth": 2,
+                        "report_structure": REPORT_STRUCTURE,
                     }
                 }
             ]   
@@ -79,10 +95,10 @@ class ConversationResponse(BaseModel):
 
 
 async def astreaming_graph(graph_input, thread):
+    yield json.dumps({"content": thread["configurable"]["thread_id"], "type": "thread_id"})
     async for mode, chunk in graph.astream(
         graph_input, thread, stream_mode=["messages", "updates"]
-    ):
-        yield json.dumps({"content": thread["configurable"]["thread_id"], "type": "thread_id"})
+    ):  
         if mode == "messages":
             msg, metadata = chunk
             if metadata["tags"] == ["query_writer"]:
@@ -111,7 +127,6 @@ async def start_conversation(request: StartConversationRequest):
         thread = {
             "configurable": {
                 "thread_id": thread_id,
-                "max_search_depth": 2,
                 **(request.config or {})
             }
         }
@@ -129,7 +144,6 @@ async def continue_conversation(request: ContinueConversationRequest):
         thread = {
             "configurable": {
                 "thread_id": request.thread_id,
-                "max_search_depth": 2,
                 **(request.config or {})
             }
         }

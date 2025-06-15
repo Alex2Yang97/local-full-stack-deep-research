@@ -31,7 +31,7 @@ from open_deep_research.prompts import (
     section_writer_inputs
 )
 
-from open_deep_research.configuration import WorkflowConfiguration
+from open_deep_research.configuration import WorkflowConfiguration, ModelName
 from open_deep_research.utils import (
     format_sections,
     get_config_value,
@@ -69,6 +69,7 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
 
     # Get configuration
     configurable = WorkflowConfiguration.from_runnable_config(config)
+    
     report_structure = configurable.report_structure
     number_of_queries = configurable.number_of_queries
     search_api = get_config_value(configurable.search_api)
@@ -84,7 +85,7 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     writer_model_name = get_config_value(configurable.writer_model)
     writer_model_kwargs = get_config_value(configurable.writer_model_kwargs or {})
     writer_model = init_chat_model(
-        model=writer_model_name, 
+        model=writer_model_name,
         model_provider=writer_provider, 
         model_kwargs=writer_model_kwargs,
         tags=["query_writer"]
@@ -112,7 +113,13 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     source_str = await select_and_execute_search(search_api, query_list, params_to_pass)
 
     # Format system instructions
-    system_instructions_sections = report_planner_instructions.format(topic=topic, report_organization=report_structure, context=source_str, feedback=feedback)
+    system_instructions_sections = report_planner_instructions.format(
+        topic=topic,
+        report_organization=report_structure, 
+        context=source_str, 
+        feedback=feedback,
+        today=get_today_str()
+    )
 
     # Set the planner
     planner_provider = get_config_value(configurable.planner_provider)
@@ -124,7 +131,7 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
                         Each section must have: name, description, research, and content fields."""
 
     # Run the planner
-    if planner_model == "claude-3-7-sonnet-latest":
+    if planner_model == ModelName.CLAUDE_3_7_SONNET:
         # Allocate a thinking budget for claude-3-7-sonnet-latest as the planner model
         planner_llm = init_chat_model(
             model=planner_model,
@@ -354,7 +361,7 @@ async def write_section(state: SectionState, config: RunnableConfig) -> Command[
     planner_model = get_config_value(configurable.planner_model)
     planner_model_kwargs = get_config_value(configurable.planner_model_kwargs or {})
 
-    if planner_model == "claude-3-7-sonnet-latest":
+    if planner_model == ModelName.CLAUDE_3_7_SONNET:
         # Allocate a thinking budget for claude-3-7-sonnet-latest as the planner model
         reflection_model = init_chat_model(
             model=planner_model,

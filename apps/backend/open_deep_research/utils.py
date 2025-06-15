@@ -37,7 +37,7 @@ from langchain_community.utilities.pubmed import PubMedAPIWrapper
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from open_deep_research.configuration import Configuration
+from open_deep_research.configuration import Configuration, ModelName, ModelProviderMAP
 from open_deep_research.state import Section
 from open_deep_research.prompts import SUMMARIZATION_PROMPT
 

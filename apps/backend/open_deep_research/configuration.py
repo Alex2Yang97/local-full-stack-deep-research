@@ -28,6 +28,23 @@ class SearchAPI(Enum):
     GOOGLESEARCH = "googlesearch"
     NONE = "none"
 
+
+class ModelName(str, Enum):
+    GPT_4O_MINI = "gpt-4o-mini"
+    GPT_4O = "gpt-4o"
+    LLAMA3_1 = "llama3.1"
+    CLAUDE_3_5_SONNET = "claude-3-5-sonnet-latest"
+    CLAUDE_3_7_SONNET = "claude-3-7-sonnet-latest"
+    
+
+ModelProviderMAP = {
+    ModelName.GPT_4O_MINI: "openai",
+    ModelName.GPT_4O: "openai",
+    ModelName.LLAMA3_1: "ollama",
+    ModelName.CLAUDE_3_5_SONNET: "anthropic",
+    ModelName.CLAUDE_3_7_SONNET: "anthropic",
+}
+
 @dataclass(kw_only=True)
 class WorkflowConfiguration:
     """Configuration for the workflow/graph-based implementation (graph.py)."""
@@ -36,19 +53,28 @@ class WorkflowConfiguration:
     search_api: SearchAPI = SearchAPI.TAVILY
     search_api_config: Optional[Dict[str, Any]] = None
     process_search_results: Literal["summarize", "split_and_rerank"] | None = None
-    summarization_model_provider: str = "ollama"
-    summarization_model: str = "llama3.1"
+    summarization_model: ModelName = ModelName.LLAMA3_1
     include_source_str: bool = False
     
     # Workflow-specific configuration
     number_of_queries: int = 2 # Number of search queries to generate per iteration
     max_search_depth: int = 2 # Maximum number of reflection + search iterations
-    planner_provider: str = "ollama"
-    planner_model: str = "llama3.1"
+    planner_model: ModelName = ModelName.LLAMA3_1
     planner_model_kwargs: Optional[Dict[str, Any]] = None
-    writer_provider: str = "ollama"
-    writer_model: str = "llama3.1"
+    writer_model: ModelName = ModelName.LLAMA3_1
     writer_model_kwargs: Optional[Dict[str, Any]] = None
+
+    @property
+    def summarization_model_provider(self) -> str:
+        return ModelProviderMAP[self.summarization_model]
+
+    @property
+    def planner_provider(self) -> str:
+        return ModelProviderMAP[self.planner_model]
+
+    @property
+    def writer_provider(self) -> str:
+        return ModelProviderMAP[self.writer_model]
 
     @classmethod
     def from_runnable_config(
