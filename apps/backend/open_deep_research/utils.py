@@ -36,7 +36,6 @@ from langchain_community.retrievers import ArxivRetriever
 from langchain_community.utilities.pubmed import PubMedAPIWrapper
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langsmith import traceable
 
 from open_deep_research.configuration import Configuration
 from open_deep_research.state import Section
@@ -169,7 +168,7 @@ Content:
 """
     return formatted_str
 
-@traceable
+
 async def tavily_search_async(search_queries, max_results: int = 5, topic: Literal["general", "news", "finance"] = "general", include_raw_content: bool = True):
     """
     Performs concurrent web searches with the Tavily API
@@ -215,7 +214,7 @@ async def tavily_search_async(search_queries, max_results: int = 5, topic: Liter
     search_docs = await asyncio.gather(*search_tasks)
     return search_docs
 
-@traceable
+
 async def azureaisearch_search_async(search_queries: list[str], max_results: int = 5, topic: str = "general", include_raw_content: bool = True) -> list[dict]:
     """
     Performs concurrent web searches using the Azure AI Search API.
@@ -275,7 +274,7 @@ async def azureaisearch_search_async(search_queries: list[str], max_results: int
         return await asyncio.gather(*tasks)
 
 
-@traceable
+
 def perplexity_search(search_queries):
     """Search the web using the Perplexity API.
     
@@ -370,7 +369,7 @@ def perplexity_search(search_queries):
     
     return search_docs
 
-@traceable
+
 async def exa_search(search_queries, max_characters: Optional[int] = None, num_results=5, 
                      include_domains: Optional[List[str]] = None, 
                      exclude_domains: Optional[List[str]] = None,
@@ -573,7 +572,7 @@ async def exa_search(search_queries, max_characters: Optional[int] = None, num_r
     
     return search_docs
 
-@traceable
+
 async def arxiv_search_async(search_queries, load_max_docs=5, get_full_documents=True, load_all_available_meta=True):
     """
     Performs concurrent searches on arXiv using the ArxivRetriever.
@@ -730,7 +729,7 @@ async def arxiv_search_async(search_queries, load_max_docs=5, get_full_documents
     
     return search_docs
 
-@traceable
+
 async def pubmed_search_async(search_queries, top_k_results=5, email=None, api_key=None, doc_content_chars_max=4000):
     """
     Performs concurrent searches on PubMed using the PubMedAPIWrapper.
@@ -878,7 +877,7 @@ async def pubmed_search_async(search_queries, top_k_results=5, email=None, api_k
     
     return search_docs
 
-@traceable
+
 async def linkup_search(search_queries, depth: Optional[str] = "standard"):
     """
     Performs concurrent web searches using the Linkup API.
@@ -924,7 +923,7 @@ async def linkup_search(search_queries, depth: Optional[str] = "standard"):
 
     return search_results
 
-@traceable
+
 async def google_search_async(search_queries: Union[str, List[str]], max_results: int = 5, include_raw_content: bool = True):
     """
     Performs concurrent web searches using Google.
@@ -1511,27 +1510,28 @@ async def select_and_execute_search(search_api: str, query_list: list[str], para
     Raises:
         ValueError: If an unsupported search API is specified
     """
+    filtered_query_list = [query for query in query_list if query is not None]
     if search_api == "tavily":
         # Tavily search tool used with both workflow and agent 
         # and returns a formatted source string
-        return await tavily_search.ainvoke({'queries': query_list, **params_to_pass})
+        return await tavily_search.ainvoke({'queries': filtered_query_list, **params_to_pass})
     elif search_api == "duckduckgo":
         # DuckDuckGo search tool used with both workflow and agent 
-        return await duckduckgo_search.ainvoke({'search_queries': query_list})
+        return await duckduckgo_search.ainvoke({'search_queries': filtered_query_list})
     elif search_api == "perplexity":
-        search_results = perplexity_search(query_list, **params_to_pass)
+        search_results = perplexity_search(filtered_query_list, **params_to_pass)
     elif search_api == "exa":
-        search_results = await exa_search(query_list, **params_to_pass)
+        search_results = await exa_search(filtered_query_list, **params_to_pass)
     elif search_api == "arxiv":
-        search_results = await arxiv_search_async(query_list, **params_to_pass)
+        search_results = await arxiv_search_async(filtered_query_list, **params_to_pass)
     elif search_api == "pubmed":
-        search_results = await pubmed_search_async(query_list, **params_to_pass)
+        search_results = await pubmed_search_async(filtered_query_list, **params_to_pass)
     elif search_api == "linkup":
-        search_results = await linkup_search(query_list, **params_to_pass)
+        search_results = await linkup_search(filtered_query_list, **params_to_pass)
     elif search_api == "googlesearch":
-        search_results = await google_search_async(query_list, **params_to_pass)
+        search_results = await google_search_async(filtered_query_list, **params_to_pass)
     elif search_api == "azureaisearch":
-        search_results = await azureaisearch_search_async(query_list, **params_to_pass)
+        search_results = await azureaisearch_search_async(filtered_query_list, **params_to_pass)
     else:
         raise ValueError(f"Unsupported search API: {search_api}")
 

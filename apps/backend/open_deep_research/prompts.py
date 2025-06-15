@@ -15,6 +15,7 @@ The queries should:
 
 1. Be related to the Report topic
 2. Help satisfy the requirements specified in the report organization
+3. Keep the queries concise and to the point
 
 Make the queries specific enough to find high-quality, relevant sources while covering the breadth needed for the report structure.
 </Task>
