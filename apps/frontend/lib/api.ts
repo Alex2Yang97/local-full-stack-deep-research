@@ -1,9 +1,10 @@
 export interface Config {
-  planner_provider?: string;
-  planner_model?: string;
-  search_api?: string;
-  writer_model?: string;
-  writer_provider?: string;
+  search_api: string;
+  planner_model: string;
+  writer_model: string;
+  summarization_model: string;
+  max_search_depth: number;
+  report_structure: string;
 }
 
 export interface StartConversationRequest {
