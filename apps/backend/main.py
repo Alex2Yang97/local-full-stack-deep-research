@@ -25,6 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for container health monitoring"""
+    return {"status": "healthy", "message": "Backend service is running"}
+
 memory = MemorySaver()
 graph = builder.compile(checkpointer=memory)
 
