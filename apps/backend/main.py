@@ -118,6 +118,9 @@ async def astreaming_graph(graph_input, thread):
                 yield json.dumps({"content": chunk["__interrupt__"][0].value, "type": "interrupt"})
             if "compile_final_report" in chunk:
                 yield json.dumps({"content": chunk["compile_final_report"]["final_report"], "type": "compile_final_report"})
+    
+    # Send stream end event
+    yield json.dumps({"content": "stream_end", "type": "stream_end"})
 
 
 @app.post("/start-conversation")

@@ -125,6 +125,8 @@ export function Chat() {
     }
   };
 
+  const ALL_EXECUTION_STEP_IDS = EXECUTION_STEPS.map(step => step.id);
+
   const processStreamEvent = (event: StreamEvent) => {
     switch (event.type) {
       case 'thread_id':
@@ -141,11 +143,26 @@ export function Chat() {
       case 'compile_final_report':
         setFinalReport(event.content);
         setState('completed');
+        // Mark all execution steps as complete
+        setExecutionSteps(prev => {
+          const updated = { ...prev };
+          ALL_EXECUTION_STEP_IDS.forEach(id => { updated[id] = true; });
+          return updated;
+        });
         break;
 
       case 'final_section_writer':
         // Handle final_section_writer as final report content
         setFinalReport(prev => prev + event.content);
+        break;
+        
+      case 'stream_end':
+        // Mark all execution steps as complete
+        setExecutionSteps(prev => {
+          const updated = { ...prev };
+          ALL_EXECUTION_STEP_IDS.forEach(id => { updated[id] = true; });
+          return updated;
+        });
         break;
         
       default:
@@ -372,6 +389,24 @@ export function Chat() {
                     <option value="gpt-4o">GPT-4o</option>
                     <option value="llama3.1">Llama3.1</option>
                     <option value="claude-3-7-sonnet-latest">Claude 3.7 Sonnet</option>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search API</label>
+                  <Select
+                    value={config.search_api}
+                    onChange={(e) => setConfig(prev => ({ ...prev, search_api: e.target.value }))}
+                    disabled={state !== 'initial'}
+                  >
+                    <option value="tavily">Tavily</option>
+                    <option value="perplexity">Perplexity</option>
+                    <option value="exa">Exa</option>
+                    <option value="arxiv">Arxiv</option>
+                    <option value="pubmed">PubMed</option>
+                    <option value="linkup">Linkup</option>
+                    <option value="duckduckgo">DuckDuckGo</option>
+                    <option value="googlesearch">Google Search</option>
                   </Select>
                 </div>
 

@@ -23,9 +23,14 @@ export interface StreamEvent {
   type: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:80';
+// Add a new type for stream end event
+export interface StreamEndEvent extends StreamEvent {
+  type: 'stream_end';
+}
 
-export async function* startConversationStream(request: StartConversationRequest): AsyncGenerator<StreamEvent, void, unknown> {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:8000';
+
+export async function* startConversationStream(request: StartConversationRequest): AsyncGenerator<StreamEvent | StreamEndEvent, void, unknown> {
   const response = await fetch(`${API_BASE_URL}/start-conversation`, {
     method: 'POST',
     headers: {
@@ -57,7 +62,11 @@ export async function* startConversationStream(request: StartConversationRequest
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6));
-            yield data as StreamEvent;
+            yield data as StreamEvent | StreamEndEvent;
+            // If we receive a stream_end event, we can break the loop
+            if (data.type === 'stream_end') {
+              return;
+            }
           } catch (e) {
             // Skip invalid JSON
           }
@@ -69,7 +78,7 @@ export async function* startConversationStream(request: StartConversationRequest
   }
 }
 
-export async function* continueConversationStream(request: ContinueConversationRequest): AsyncGenerator<StreamEvent, void, unknown> {
+export async function* continueConversationStream(request: ContinueConversationRequest): AsyncGenerator<StreamEvent | StreamEndEvent, void, unknown> {
   const response = await fetch(`${API_BASE_URL}/continue-conversation`, {
     method: 'POST',
     headers: {
@@ -101,7 +110,11 @@ export async function* continueConversationStream(request: ContinueConversationR
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6));
-            yield data as StreamEvent;
+            yield data as StreamEvent | StreamEndEvent;
+            // If we receive a stream_end event, we can break the loop
+            if (data.type === 'stream_end') {
+              return;
+            }
           } catch (e) {
             // Skip invalid JSON
           }
